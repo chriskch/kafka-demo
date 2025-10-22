@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kafka Orders Demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            color-scheme: light dark;
+            --background: linear-gradient(135deg, #111827, #1e3a8a);
+            --card-bg: rgba(15, 23, 42, 0.87);
+            --accent: #38bdf8;
+            --accent-dark: #0284c7;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --success: #34d399;
+            --danger: #f87171;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .app-shell {
+            width: min(1100px, 100%);
+            display: grid;
+            gap: 2rem;
+        }
+
+        header {
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: clamp(2rem, 4vw, 3rem);
+            letter-spacing: -0.03em;
+        }
+
+        header p {
+            margin-top: 0.75rem;
+            color: var(--muted);
+            font-size: 1.05rem;
+        }
+
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            padding: 1.75rem;
+            box-shadow: 0 42px 70px -45px rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            inset: -35% auto auto -35%;
+            width: 220px;
+            height: 220px;
+            background: radial-gradient(circle, rgba(56, 189, 248, 0.35), transparent 65%);
+            filter: blur(12px);
+            z-index: 0;
+        }
+
+        .card > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+
+        form {
+            display: grid;
+            gap: 1.25rem;
+        }
+
+        label {
+            display: grid;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        input, textarea {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            color: inherit;
+            font: inherit;
+            transition: border 0.2s ease, transform 0.2s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            transform: translateY(-1px);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 110px;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            border-radius: 999px;
+            padding: 0.9rem 1.9rem;
+            font: inherit;
+            font-weight: 600;
+            color: #0f172a;
+            background: linear-gradient(115deg, var(--accent), var(--accent-dark));
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 22px 35px -22px rgba(56, 189, 248, 0.85);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .hint {
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        ul.timeline {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: grid;
+            gap: 1rem;
+        }
+
+        .timeline li {
+            border-radius: 16px;
+            padding: 1rem 1.3rem;
+            background: rgba(15, 23, 42, 0.55);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            display: grid;
+            gap: 0.45rem;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.35rem 0.9rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(52, 211, 153, 0.18);
+            color: var(--success);
+        }
+
+        .order-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+        }
+
+        .chip {
+            padding: 0.3rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(56, 189, 248, 0.18);
+            color: var(--accent);
+            font-size: 0.85rem;
+            border: 1px solid rgba(56, 189, 248, 0.45);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--muted);
+            padding: 2.5rem 1rem;
+            border-radius: 16px;
+            background: rgba(15, 23, 42, 0.45);
+            border: 1px dashed rgba(148, 163, 184, 0.35);
+        }
+
+        .toast {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            padding: 1rem 1.4rem;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.92);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            color: var(--text);
+            box-shadow: 0 20px 45px -25px rgba(15, 23, 42, 0.95);
+            opacity: 0;
+            transform: translateY(-18px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            z-index: 1000;
+        }
+
+        .toast.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.success {
+            border-color: rgba(52, 211, 153, 0.4);
+        }
+
+        .toast.error {
+            border-color: rgba(248, 113, 113, 0.4);
+        }
+
+        @media (max-width: 700px) {
+            body {
+                padding: 1.5rem;
+            }
+
+            .actions {
+                flex-direction: column-reverse;
+                align-items: flex-start;
+            }
+
+            .toast {
+                left: 50%;
+                right: initial;
+                transform: translate(-50%, -18px);
+            }
+
+            .toast.active {
+                transform: translate(-50%, 0);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="app-shell">
+    <header>
+        <h1>Kafka Order Pipeline</h1>
+        <p>Submit an order through the producer service and watch the notification service react. Kafka keeps
+            everything decoupled and reliable.</p>
+    </header>
+
+    <div class="grid">
+        <section class="card">
+            <h2>Create an order</h2>
+            <form id="order-form">
+                <label>
+                    Customer email
+                    <input type="email" id="email" required placeholder="customer@example.com" autocomplete="email">
+                </label>
+                <label>
+                    Items (one per line)
+                    <textarea id="items" placeholder="Coffee Beans&#10;French Press"></textarea>
+                </label>
+                <label>
+                    Total amount (€)
+                    <input type="number" id="total" step="0.01" min="0.01" required placeholder="42.50">
+                </label>
+                <div class="actions">
+                    <span class="hint">Producer: <code>POST http://localhost:8081/orders</code></span>
+                    <button type="submit" id="submit-btn">Queue order</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Notifications</h2>
+            <div class="hint" style="margin-bottom: 0.75rem;">
+                Consumer: <code>GET http://localhost:8082/notifications</code>
+            </div>
+            <div id="notification-feed">
+                <div class="empty-state">
+                    No notifications yet. Submit an order to see Kafka in action.
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    const form = document.getElementById('order-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const feed = document.getElementById('notification-feed');
+    const toast = document.getElementById('toast');
+
+    const orderEndpoint = 'http://localhost:8081/orders';
+    const notificationEndpoint = 'http://localhost:8082/notifications';
+
+    function showToast(message, type = 'success') {
+        toast.textContent = message;
+        toast.className = `toast ${type} active`;
+        setTimeout(() => toast.classList.remove('active'), 3200);
+    }
+
+    async function submitOrder(event) {
+        event.preventDefault();
+        submitBtn.disabled = true;
+        const payload = {
+            customerEmail: document.getElementById('email').value.trim(),
+            items: document.getElementById('items').value
+                .split(/\r?\n/)
+                .map(item => item.trim())
+                .filter(Boolean),
+            totalAmount: Number.parseFloat(document.getElementById('total').value)
+        };
+
+        try {
+            const response = await fetch(orderEndpoint, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.json().catch(() => ({}));
+                throw new Error(errorBody?.message || 'Failed to queue order');
+            }
+
+            const result = await response.json();
+            form.reset();
+            showToast(`Order ${result.orderId} queued`, 'success');
+            await refreshNotifications();
+        } catch (error) {
+            console.error(error);
+            showToast(error.message || 'Something went wrong', 'error');
+        } finally {
+            submitBtn.disabled = false;
+        }
+    }
+
+    function renderNotifications(items) {
+        if (!items.length) {
+            feed.innerHTML = `
+                <div class="empty-state">
+                    No notifications yet. Submit an order to see Kafka in action.
+                </div>`;
+            return;
+        }
+
+        const list = document.createElement('ul');
+        list.className = 'timeline';
+
+        items.slice().reverse().forEach(item => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <div class="badge">Notification sent</div>
+                <div class="order-meta">
+                    <span><strong>Order:</strong> ${item.orderId}</span>
+                    <span><strong>Email:</strong> ${item.customerEmail}</span>
+                    <span><strong>Total:</strong> €${Number(item.totalAmount).toFixed(2)}</span>
+                    <span><strong>Created:</strong> ${new Date(item.createdAt).toLocaleString()}</span>
+                </div>
+                <div class="items">
+                    ${item.items.map(entry => `<span class="chip">${entry}</span>`).join('')}
+                </div>
+            `;
+            list.appendChild(li);
+        });
+
+        feed.innerHTML = '';
+        feed.appendChild(list);
+    }
+
+    async function refreshNotifications() {
+        try {
+            const response = await fetch(notificationEndpoint);
+            if (!response.ok) {
+                throw new Error('Failed to load notifications');
+            }
+            const data = await response.json();
+            renderNotifications(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    form.addEventListener('submit', submitOrder);
+    refreshNotifications();
+    setInterval(refreshNotifications, 4000);
+</script>
+</body>
+</html>
