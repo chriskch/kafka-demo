@@ -57,7 +57,7 @@ Infrastructure is provided via Docker Compose: a single-node Kafka broker runnin
 For demo-only scenarios you can run the full stack in containers:
 
 ```bash
-docker compose up --build            # builds and starts Kafka, services, UI and Kafka UI
+docker compose up --build            # builds (tests skipped) and starts Kafka, services, UI and Kafka UI
 ```
 
 Services remain reachable on the usual localhost ports:
@@ -67,12 +67,13 @@ Services remain reachable on the usual localhost ports:
 - Notification feed: <http://localhost:8082/notifications>
 - Kafka UI: <http://localhost:8090>
 
-Stop the stack with `docker compose down`. Use `docker compose up --build --force-recreate` after making code changes to ensure images are rebuilt.
+Stop the stack with `docker compose down`. Use `docker compose up --build --force-recreate` after making code changes to ensure images are rebuilt.  
+> The Dockerfiles invoke `./mvnw package -Dmaven.test.skip=true`, so tests are neither executed nor compiled during image builds.
 
 ## Browser walk-through
 
 Open [http://localhost:8080](http://localhost:8080). The UI issues `POST http://localhost:8081/orders` and polls `http://localhost:8082/notifications` to illustrate how Kafka transports the messages.
-Both services ship with a `CorsFilter` that pins `Access-Control-Allow-Origin` to `http://localhost:8080`. If you host the UI elsewhere, update `CorsFilter.FRONTEND_ORIGIN` in each service.
+Both services ship with a `CorsFilter` that pins `Access-Control-Allow-Origin` to `http://localhost:8080`. Override the origin via `DEMO_FRONTEND_ORIGIN` if the UI runs elsewhere.
 
 ## Development workflow
 
@@ -104,7 +105,7 @@ Resulting runnable jars reside in `target/quarkus-app/`. Start them with `java -
 | ---------------------------------- | ----------------------------------- | ------------------------------------------------- |
 | `KAFKA_BOOTSTRAP_SERVERS`        | Kafka broker endpoint for services  | `localhost:39092`                               |
 | `quarkus.http.port` (per module) | HTTP port override                  | UI `8080`, producer `8081`, consumer `8082` |
-| `CorsFilter.FRONTEND_ORIGIN`     | Allowed origin for browser requests | `http://localhost:8080`                         |
+| `demo.frontend.origin` / `DEMO_FRONTEND_ORIGIN` | Allowed origin for browser requests | `http://localhost:8080` |
 
 ## Troubleshooting
 

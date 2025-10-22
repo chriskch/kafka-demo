@@ -40,7 +40,7 @@ Ensure `KAFKA_BOOTSTRAP_SERVERS` points to your Kafka broker when running outsid
 
 ### Container image / Docker Compose
 
-- Build image directly: `docker build -f src/main/docker/Dockerfile.jvm -t kafka-demo/order-service .` (the Dockerfile runs `./mvnw package -DskipTests` for you).
+- Build image directly: `docker build -f src/main/docker/Dockerfile.jvm -t kafka-demo/order-service .` (the Dockerfile runs `./mvnw package -Dmaven.test.skip=true` to avoid compiling/executing tests).
 - Or let the top-level `docker compose up --build` target build and run the service together with Kafka and the other apps.
 
 ## API
@@ -64,7 +64,7 @@ curl -X POST http://localhost:8081/orders \
 |-------------------------------------|----------------------------------------|---------------------|
 | `KAFKA_BOOTSTRAP_SERVERS`           | Kafka bootstrap servers                | `localhost:39092`   |
 | `quarkus.http.port`                 | HTTP port                              | `8081`              |
-| `CorsFilter.FRONTEND_ORIGIN`        | Allowed browser origin                 | `http://localhost:8080` |
+| `demo.frontend.origin` / `DEMO_FRONTEND_ORIGIN` | Allowed browser origin | `http://localhost:8080` |
 
 The UI itself lives in the root project (`http://localhost:8080`) and posts orders to this
 service.

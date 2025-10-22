@@ -1,16 +1,16 @@
 package org.demo;
 
 import io.quarkus.test.junit.QuarkusTest;
-import io.smallrye.reactive.messaging.providers.connectors.InMemoryConnector;
-import io.smallrye.reactive.messaging.providers.connectors.InMemorySink;
-import org.eclipse.microprofile.reactive.messaging.Message;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
+import io.quarkus.test.junit.mockito.InjectMock;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -21,22 +21,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @QuarkusTest
 class OrderResourceTest {
 
-    private static InMemoryConnector connector;
+    @InjectMock
+    OrderProducer producer;
 
-    @BeforeAll
-    static void init() {
-        connector = InMemoryConnector.switchOutgoingChannelsToInMemory("orders-out");
-    }
-
-    @AfterAll
-    static void tearDown() {
-        InMemoryConnector.clear();
+    @BeforeEach
+    void stubProducer() {
+        Mockito.when(producer.publish(Mockito.any()))
+                .thenReturn(CompletableFuture.completedFuture(null));
     }
 
     @Test
     void postOrderPublishesMessageToKafkaChannel() {
-        InMemorySink<OrderMessage> sink = connector.sink("orders-out");
-        sink.clear();
+        ArgumentCaptor<OrderMessage> captor = ArgumentCaptor.forClass(OrderMessage.class);
 
         given()
                 .contentType("application/json")
@@ -52,15 +48,14 @@ class OrderResourceTest {
                 .body("orderId", notNullValue())
                 .body("status", equalTo("Order queued for processing"));
 
-        List<Message<OrderMessage>> received = sink.received();
-        assertEquals(1, received.size(), "Expected a single order message");
+        Mockito.verify(producer).publish(captor.capture());
+        OrderMessage message = captor.getValue();
 
-        OrderMessage payload = received.get(0).getPayload();
-        assertNotNull(payload);
-        assertNotNull(payload.orderId());
-        assertEquals("customer@example.com", payload.customerEmail());
-        assertEquals(0, payload.totalAmount().compareTo(new BigDecimal("42.50")));
-        assertEquals(List.of("Coffee Beans", "Chemex"), payload.items());
-        assertNotNull(payload.createdAt());
+        assertNotNull(message);
+        assertNotNull(message.orderId());
+        assertEquals("customer@example.com", message.customerEmail());
+        assertEquals(0, message.totalAmount().compareTo(new BigDecimal("42.50")));
+        assertEquals(List.of("Coffee Beans", "Chemex"), message.items());
+        assertNotNull(message.createdAt());
     }
 }

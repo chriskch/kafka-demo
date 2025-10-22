@@ -41,7 +41,7 @@ Remember to supply `KAFKA_BOOTSTRAP_SERVERS` so the service can reach your Kafka
 
 ### Container image / Docker Compose
 
-- Build image directly: `docker build -f src/main/docker/Dockerfile.jvm -t kafka-demo/notification-service .` (the Dockerfile invokes `./mvnw package -DskipTests` during the build).
+- Build image directly: `docker build -f src/main/docker/Dockerfile.jvm -t kafka-demo/notification-service .` (the Dockerfile invokes `./mvnw package -Dmaven.test.skip=true` so tests are skipped during the build).
 - Or use the root-level `docker compose up --build` to build and run the entire demo stack automatically.
 
 ## REST endpoints
@@ -60,7 +60,7 @@ Only service logs (and the REST endpoint) simulate downstream work; no emails ar
 |-------------------------------------|----------------------------------------|---------------------|
 | `KAFKA_BOOTSTRAP_SERVERS`           | Kafka bootstrap servers                | `localhost:39092`   |
 | `quarkus.http.port`                 | HTTP port                              | `8082`              |
-| `CorsFilter.FRONTEND_ORIGIN`        | Allowed browser origin                 | `http://localhost:8080` |
+| `demo.frontend.origin` / `DEMO_FRONTEND_ORIGIN` | Allowed browser origin | `http://localhost:8080` |
 
 Health endpoints remain available even if Kafka is unreachable, making it easier to
 demonstrate replay behaviour (start this service after producing orders).
