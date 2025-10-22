@@ -30,7 +30,7 @@ Infrastructure is provided via Docker Compose: a single-node Kafka broker runnin
 1. Start Kafka and Kafka UI:
 
    ```bash
-   docker compose up
+   docker compose up kafka-broker kafka-ui
    ```
 
    Kafka UI is available at [http://localhost:8090](http://localhost:8090), the broker listens on `localhost:39092`.
@@ -62,12 +62,13 @@ docker compose up --build            # builds (tests skipped) and starts Kafka, 
 
 Services remain reachable on the usual localhost ports:
 
-- UI: <http://localhost:8080>
-- Order API: <http://localhost:8081>
-- Notification feed: <http://localhost:8082/notifications>
-- Kafka UI: <http://localhost:8090>
+- UI: [http://localhost:8080](http://localhost:8080)
+- Order API: [http://localhost:8081](http://localhost:8081)
+- Notification feed: [http://localhost:8082/notifications](http://localhost:8082/notifications)
+- Kafka UI: [http://localhost:8090](http://localhost:8090)
 
-Stop the stack with `docker compose down`. Use `docker compose up --build --force-recreate` after making code changes to ensure images are rebuilt.  
+Stop the stack with `docker compose down`. Use `docker compose up --build --force-recreate` after making code changes to ensure images are rebuilt.
+
 > The Dockerfiles invoke `./mvnw package -Dmaven.test.skip=true`, so tests are neither executed nor compiled during image builds.
 
 ## Browser walk-through
@@ -101,11 +102,11 @@ Resulting runnable jars reside in `target/quarkus-app/`. Start them with `java -
 
 ## Configuration quick reference
 
-| Key / Env Var                      | Description                         | Default                                           |
-| ---------------------------------- | ----------------------------------- | ------------------------------------------------- |
-| `KAFKA_BOOTSTRAP_SERVERS`        | Kafka broker endpoint for services  | `localhost:39092`                               |
-| `quarkus.http.port` (per module) | HTTP port override                  | UI `8080`, producer `8081`, consumer `8082` |
-| `demo.frontend.origin` / `DEMO_FRONTEND_ORIGIN` | Allowed origin for browser requests | `http://localhost:8080` |
+| Key / Env Var                                       | Description                         | Default                                           |
+| --------------------------------------------------- | ----------------------------------- | ------------------------------------------------- |
+| `KAFKA_BOOTSTRAP_SERVERS`                         | Kafka broker endpoint for services  | `localhost:39092`                               |
+| `quarkus.http.port` (per module)                  | HTTP port override                  | UI `8080`, producer `8081`, consumer `8082` |
+| `demo.frontend.origin` / `DEMO_FRONTEND_ORIGIN` | Allowed origin for browser requests | `http://localhost:8080`                         |
 
 ## Troubleshooting
 
